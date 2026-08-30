@@ -1,0 +1,1517 @@
+{
+  "name": "AI Email Assistant Pro",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an AI email classification assistant.\n\nAnalyze the email carefully.\n\nClassify it into EXACTLY ONE of these categories:\n\norder\ninquiry\ncomplaint\nspam\nthank_you\n\n\nRules:\n- Return ONLY one word.\n- No punctuation.\n- No explanation.\n- No extra text.\n- Ignore greetings and signatures.\n- If unsure, choose the closest matching category.\n\nEmail:{{ $('Gmail Trigger').item.json.text }}",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        -1216,
+        -16
+      ],
+      "id": "a07ea7a1-d41f-477d-a73c-026d862d32f5",
+      "name": "Email Classifier",
+      "retryOnFail": false
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.text.trim().toLowerCase() }}",
+                    "rightValue": "order",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "76d6fae0-73ed-4344-90e4-20dfb5b87250"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Order"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "3e46a932-fcc1-475e-833f-758c0a46eb74",
+                    "leftValue": "={{ $json.text.trim().toLowerCase() }}",
+                    "rightValue": "inquiry",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Inquiry"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "0f3799ef-9a7c-4196-b2b7-6c79e78a6065",
+                    "leftValue": "={{ $json.text.trim().toLowerCase() }}",
+                    "rightValue": "complaint",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Complaint"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "d002c254-cf4e-42c5-95f2-ad8137570017",
+                    "leftValue": "={{ $json.text.trim().toLowerCase() }}",
+                    "rightValue": "spam",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Spam"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "1f266193-2079-463b-840a-ef5576e30b21",
+                    "leftValue": "={{ $json.text.trim().toLowerCase() }}",
+                    "rightValue": "thank_you",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Thank You"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -880,
+        -64
+      ],
+      "id": "5d4f6b0a-8174-412d-b783-a38f701e00e9",
+      "name": "Category Switch"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-3-flash-preview",
+          "mode": "list",
+          "cachedResultName": "models/gemini-3-flash-preview"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are a professional customer support representative.\n\nWrite a professional email reply to the customer's order.\n\nInstructions:\nReturn the email in HTML format only.\n- Use <p> for paragraphs.\n- Use <br> where needed.\n- Do not use Markdown.\n- Do not use \\n.\n- Return only valid HTML.\n- Return ONLY the email body.\n- Do NOT include a subject line.\n- Do NOT include \"Subject:\", \"Re:\", metadata, notes or explanations.\n- Write in a friendly and professional business tone.\n- Use proper paragraphs.\n- Leave one blank line between paragraphs.\n- If the customer's name is available, greet them by name.\n- Otherwise use \"Dear Customer,\".\n- Confirm that the order has been received.\n- Mention that the order is being reviewed.\n- If delivery information is available, include it naturally.\n- If information is missing, do NOT invent details.\n- Never use placeholders like [Product Name] or [Order Number].\n- End exactly like this:\n\nBest regards,\n\nCustomer Support Team\n\nCustomer Email:\n\n{{ $('Gmail Trigger').item.json.text || $('Gmail Trigger').item.json.html }}\n\n"
+            }
+          ]
+        },
+        "simplify": false,
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        -384,
+        -416
+      ],
+      "id": "0861b205-a350-4b73-aabf-defe3597d026",
+      "name": "Order Reply AI",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "oKxw4tlNeYXwg73A",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "models/gemini-3-flash-preview"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are a professional email subject generator.\n\nGenerate a professional subject line for an order confirmation email.\n\nRules:\n- Return ONLY the subject.\n- Maximum 8 words.\n- Do NOT write \"Subject:\".\n- Do NOT use quotation marks.\n- Keep it short and professional.\n\nCustomer Email:\n{{ $('Order Reply AI').item.json.text || $('Order Reply AI').item.json.html }}"
+            }
+          ]
+        },
+        "simplify": false,
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        -32,
+        -416
+      ],
+      "id": "7dea0398-f332-4728-b79a-ace85b9e845e",
+      "name": "Order Subject AI",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "oKxw4tlNeYXwg73A",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "={{ $('Order Subject AI').item.json.candidates[0].content.parts[0].text }}",
+        "emailType": "html",
+        "message": "={{\n$('Order Reply AI')\n.item.json.candidates[0].content.parts[0].text.replace(/\\n\\n/g, '<br><br>').replace(/\\n/g,'<br>')\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        368,
+        -416
+      ],
+      "id": "99e6837f-0e38-4649-a55c-27401743eaec",
+      "name": "Send Order Email",
+      "webhookId": "b685705f-2829-4ef3-bd9f-1cc26e0a2009",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "rPD5sziw58GWC4iB",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "",
+          "mode": "list",
+          "cachedResultName": "",
+          "cachedResultUrl": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "",
+          "mode": "list",
+          "cachedResultName": "",
+          "cachedResultUrl": ""
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        624,
+        -416
+      ],
+      "id": "837d88b9-2459-4c85-be76-a29827ebc07c",
+      "name": "Order Log Sheet"
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "={{ $('Inquiry Subject AI').item.json.candidates[0].content.parts[0].text }}",
+        "emailType": "html",
+        "message": "={{\n$('Inquiry Reply AI')\n.item.json.candidates[0].content.parts[0].text.replace(/\\n\\n/g, '<br><br>').replace(/\\n/g,'<br>')\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        352,
+        -208
+      ],
+      "id": "e6b0512a-8fe6-44c1-bb0d-413cc0f349a0",
+      "name": "Send Inquiry Email",
+      "webhookId": "81f831c9-49a6-45ef-a126-4eae4aadc54d",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "rPD5sziw58GWC4iB",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "177tNLmGeHgfz8aCfS7h-pvrC_3vSSqM2Iqfz0VOBEdg",
+          "mode": "list",
+          "cachedResultName": "AI Email Assistant Log ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/177tNLmGeHgfz8aCfS7h-pvrC_3vSSqM2Iqfz0VOBEdg/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/177tNLmGeHgfz8aCfS7h-pvrC_3vSSqM2Iqfz0VOBEdg/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ DateTime.fromISO($('Gmail Trigger').item.json.date).toFormat('dd-MM-yyyy HH:mm:ss') }}",
+            "From": "={{ $('Gmail Trigger').item.json.from.value[0].address }}",
+            "Subject": "={{ $('Gmail Trigger').item.json.subject }}",
+            "Category": "Inquiry",
+            "Status": "Draft Created"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "From",
+              "displayName": "From",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Subject",
+              "displayName": "Subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Ticket ID",
+              "displayName": "Ticket ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        640,
+        -208
+      ],
+      "id": "dd1a947c-8a16-4526-a177-4b9639816f9e",
+      "name": "Inquiry Log Sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "jHQL9VXkGUC83JRi",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-3-flash-preview",
+          "mode": "list",
+          "cachedResultName": "models/gemini-3-flash-preview"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are a professional customer support representative.\n\nReply professionally to the customer's complaint.\n\nTicket Number:\n{{ $json.ticketId }}\n\nInstructions:\n\n- Apologize sincerely.\n- Confirm that the complaint has been received.\n- Mention the Ticket Number naturally.\n- Tell the customer the support team will investigate the issue.\n- Promise an update soon.\n- Return ONLY the email body.\n- Do NOT generate a subject.\n- Do NOT use placeholders.\n- Use <p> for paragraphs.\n- Use <br> where needed.\n- Do not use Markdown.\n- Do not use \\n.\n- Return only valid HTML. }}\n\nEnd exactly with:\n\nBest regards,\n\nCustomer Support Team\n\nCustomer Email:\n\n{{ $('Gmail Trigger').item.json.text || $('Gmail Trigger').item.json.html }}\n"
+            }
+          ]
+        },
+        "simplify": false,
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        -368,
+        -16
+      ],
+      "id": "4b715d18-501f-4b48-848a-d361c46e1da6",
+      "name": "Complaint Reply AI",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "oKxw4tlNeYXwg73A",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "dd453614-e71f-463e-8ab8-a128cd38dd92",
+              "name": "ticketId",
+              "value": "={{ \"TKT-\" + $now.format(\"yyyyMMdd\") + \"-\" + Math.floor(Math.random() * 9000 + 1000) }}",
+              "type": "string"
+            },
+            {
+              "id": "6cbf5928-1364-4adb-9b3e-1846cd88087d",
+              "name": "status",
+              "value": "Open",
+              "type": "string"
+            },
+            {
+              "id": "f6e8ddd7-461f-4c62-8dcd-49e5f98ac9ba",
+              "name": "priority",
+              "value": "={{ $('Gmail Trigger').item.json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -592,
+        -16
+      ],
+      "id": "ff86ee16-b7f5-48f7-bcfb-ca335e3e54d0",
+      "name": "Generate Ticket ID"
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "={{ $('Complaint Subject AI').item.json.candidates[0].content.parts[0].text }}",
+        "emailType": "html",
+        "message": "={{\n$('Complaint Reply AI')\n.item.json.candidates[0].content.parts[0].text.replace(/\\n\\n/g, '<br><br>').replace(/\\n/g,'<br>')\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        368,
+        -16
+      ],
+      "id": "4c62c014-8d69-4199-b3a7-105e21e2419b",
+      "name": "Send Complaint Email",
+      "webhookId": "cb7268f5-e857-451a-b5f6-200c6c2901c4",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "rPD5sziw58GWC4iB",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1HIudm2Ol23DqjuATCc4MKUV5kosUddVgjmte0V-QH0s",
+          "mode": "list",
+          "cachedResultName": "Complaint Tickets",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1HIudm2Ol23DqjuATCc4MKUV5kosUddVgjmte0V-QH0s/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1HIudm2Ol23DqjuATCc4MKUV5kosUddVgjmte0V-QH0s/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Ticket ID": "={{ $('Generate Ticket ID').item.json.ticketId }}",
+            " Date": "={{ DateTime.fromISO($('Gmail Trigger').item.json.date).toFormat('dd-MM-yyyy HH:mm:ss') }}",
+            " Customer Email": "={{ $('Gmail Trigger').item.json.from.value[0].address }}",
+            "Subject ": "={{ $('Gmail Trigger').item.json.subject }}",
+            " Status": "Open"
+          },
+          "matchingColumns": [
+            "Ticket ID"
+          ],
+          "schema": [
+            {
+              "id": "Ticket ID",
+              "displayName": "Ticket ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": " Date",
+              "displayName": " Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": " Customer Email",
+              "displayName": " Customer Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Subject ",
+              "displayName": "Subject ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": " Status",
+              "displayName": " Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        640,
+        -16
+      ],
+      "id": "79130275-d545-434b-8ca4-642810d75591",
+      "name": "Ticket Log Sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "jHQL9VXkGUC83JRi",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "177tNLmGeHgfz8aCfS7h-pvrC_3vSSqM2Iqfz0VOBEdg",
+          "mode": "list",
+          "cachedResultName": "AI Email Assistant Log ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/177tNLmGeHgfz8aCfS7h-pvrC_3vSSqM2Iqfz0VOBEdg/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/177tNLmGeHgfz8aCfS7h-pvrC_3vSSqM2Iqfz0VOBEdg/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ DateTime.fromISO($('Gmail Trigger').item.json.date).toFormat('dd-MM-yyyy HH:mm:ss') }}",
+            "From": "={{ $('Gmail Trigger').item.json.from.value[0].address }}",
+            "Subject": "={{ $('Gmail Trigger').item.json.subject }}",
+            "Category": "Complaint",
+            "Status": "Draft Created",
+            "Ticket ID": "={{ $('Generate Ticket ID').item.json.ticketId }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "From",
+              "displayName": "From",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Subject",
+              "displayName": "Subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Ticket ID",
+              "displayName": "Ticket ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        848,
+        -16
+      ],
+      "id": "0f9c3cc7-444b-4833-82c1-2adf1ecd3503",
+      "name": "Complaint Log Sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "jHQL9VXkGUC83JRi",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "models/gemini-3-flash-preview"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are a professional customer support representative.\n\nA customer has sent us a thank you email.\n\nWrite a warm and professional reply.\n\nRules:\n- Return ONLY the email body.\n- Do NOT include a subject line.\n- Do NOT repeat the customer's message.\n- Thank the customer for their kind words.\n- Tell them their feedback is greatly appreciated.\n- Say you are happy to have helped.\n- Let them know they can contact you anytime if they need further assistance.\n- Write in multiple paragraphs.\n- Use <p> for paragraphs.\n- Use <br> where needed.\n- Do not use Markdown.\n- Do not use \\n.\n- Return only valid HTML. }}\n- End exactly like this:\n\nBest regards,\n\nCustomer Support Team\n\nCustomer Email:\n\n{{ $('Gmail Trigger').item.json.text || $('Gmail Trigger').item.json.html }}\n\n"
+            }
+          ]
+        },
+        "simplify": false,
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        -368,
+        448
+      ],
+      "id": "2060fb42-b6d5-4b2d-b3ea-b6cd0fd022a7",
+      "name": "Thank You Reply AI",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "oKxw4tlNeYXwg73A",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "Label_5899984145517546648"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -368,
+        208
+      ],
+      "id": "8644336f-de91-485f-8637-4c43ddc7f214",
+      "name": "Mark as Spam",
+      "webhookId": "1e82f8bd-7175-4605-bdbb-d2bbc99d5352",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "rPD5sziw58GWC4iB",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "177tNLmGeHgfz8aCfS7h-pvrC_3vSSqM2Iqfz0VOBEdg",
+          "mode": "list",
+          "cachedResultName": "AI Email Assistant Log ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/177tNLmGeHgfz8aCfS7h-pvrC_3vSSqM2Iqfz0VOBEdg/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/177tNLmGeHgfz8aCfS7h-pvrC_3vSSqM2Iqfz0VOBEdg/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ DateTime.fromISO($('Gmail Trigger').item.json.date).toFormat('dd-MM-yyyy HH:mm:ss') }}",
+            "From": "={{ $('Gmail Trigger').item.json.from.value[0].address }}",
+            "Subject": "={{ $('Gmail Trigger').item.json.subject }}",
+            "Category": "Spam",
+            "Status": "Draft Created"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "From",
+              "displayName": "From",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Subject",
+              "displayName": "Subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Ticket ID",
+              "displayName": "Ticket ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -48,
+        208
+      ],
+      "id": "22fcda5b-b05b-43de-9100-af39314a0594",
+      "name": "Spam Log Sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "jHQL9VXkGUC83JRi",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "={{ $('Thank You Subject AI').item.json.candidates[0].content.parts[0].text }}",
+        "emailType": "html",
+        "message": "={{\n$('Thank You Reply AI')\n.item.json.candidates[0].content.parts[0].text.replace(/\\n\\n/g, '<br><br>').replace(/\\n/g,'<br>')\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        384,
+        448
+      ],
+      "id": "866b90b9-4326-4d05-b53f-258b2988b907",
+      "name": "Send Thank You Email",
+      "webhookId": "0ac97338-ab15-43aa-87ad-60327b0be98e",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "rPD5sziw58GWC4iB",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "177tNLmGeHgfz8aCfS7h-pvrC_3vSSqM2Iqfz0VOBEdg",
+          "mode": "list",
+          "cachedResultName": "AI Email Assistant Log ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/177tNLmGeHgfz8aCfS7h-pvrC_3vSSqM2Iqfz0VOBEdg/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/177tNLmGeHgfz8aCfS7h-pvrC_3vSSqM2Iqfz0VOBEdg/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ DateTime.fromISO($('Gmail Trigger').item.json.date).toFormat('dd-MM-yyyy HH:mm:ss') }}",
+            "From": "={{ $('Gmail Trigger').item.json.from.value[0].address }}",
+            "Subject": "={{ $('Gmail Trigger').item.json.subject }}",
+            "Category": "Thank You",
+            "Status": "Draft Created"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "From",
+              "displayName": "From",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Subject",
+              "displayName": "Subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Ticket ID",
+              "displayName": "Ticket ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        656,
+        448
+      ],
+      "id": "6d146358-6b89-43f1-bebc-e3c5b08d740e",
+      "name": "Thank You Log Sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "jHQL9VXkGUC83JRi",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputDataFieldName": "attachment_0",
+        "name": "={{ $('Gmail Trigger').item.binary.attachment_0.fileName }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "",
+          "cachedResultUrl": ""
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "",
+          "mode": "list",
+          "cachedResultName": "",
+          "cachedResultUrl": ""
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -1392,
+        -160
+      ],
+      "id": "92e538d3-d72f-4fde-883c-f8f993e1ca77",
+      "name": "Upload Attachment to Drive"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "b6f4a462-285c-400b-bf06-be673f4e02d3",
+              "leftValue": "={{ $binary.attachment_0 }}",
+              "rightValue": "Exists",
+              "operator": {
+                "type": "object",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1584,
+        -32
+      ],
+      "id": "b4367fb7-958e-4681-8677-dd49dc7b23fe",
+      "name": "Check Attachment"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        -1216,
+        240
+      ],
+      "id": "9e93ae89-df50-49e5-861c-f54c2b6957fb",
+      "name": "Gemini AI Model"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "maxResults": 1,
+        "filters": {},
+        "options": {
+          "downloadAttachments": true
+        }
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -1792,
+        -32
+      ],
+      "id": "30cf1794-bdf0-4718-a94a-41bb2b5e850a",
+      "name": "Gmail Trigger",
+      "retryOnFail": false
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-3-flash-preview",
+          "mode": "list",
+          "cachedResultName": "models/gemini-3-flash-preview"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are a professional customer support representative.\n\nReply to the customer's inquiry professionally.\n\nRules:\n- Use <p> for paragraphs.\n- Use <br> where needed.\n- Do not use Markdown.\n- Do not use \\n.\n- Return only valid HTML. \n- Return ONLY the email body.\n- Do NOT generate a subject.\n- Answer only using information provided in the email.\n- If information is unavailable, politely tell the customer that the support team will provide more details soon.\n- Use professional paragraphs.\n- Never invent facts.\n- Never use placeholders.\n\nEnd exactly with:\n\nBest regards,\n\nCustomer Support Team\n\nCustomer Email:\n\n{{ $('Gmail Trigger').item.json.text || $('Gmail Trigger').item.json.html }}\n"
+            }
+          ]
+        },
+        "simplify": false,
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        -384,
+        -208
+      ],
+      "id": "e4972640-a130-4469-946e-ce2154852ce8",
+      "name": "Inquiry Reply AI",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "oKxw4tlNeYXwg73A",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "models/gemini-3-flash-preview"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are a professional email subject generator.\n\nGenerate a professional subject line for a reply to a customer inquiry.\n\nRules:\n- Return ONLY the subject.\n- Maximum 8 words.\n- Do NOT write \"Subject:\".\n- Do NOT use quotation marks.\n\nCustomer Email:\n{{ $('Inquiry Reply AI').item.json.text || $('Inquiry Reply AI').item.json.html }}\n"
+            }
+          ]
+        },
+        "simplify": false,
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        -32,
+        -208
+      ],
+      "id": "1cbbd699-8827-4a80-b37e-d7e271ba49ac",
+      "name": "Inquiry Subject AI",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "oKxw4tlNeYXwg73A",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "models/gemini-3-flash-preview"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are a professional email subject generator.\n\nGenerate a short and professional subject line for the reply to the customer's complaint.\n\nRules:\n- Return ONLY the subject.\n- Maximum 8 words.\n- Do NOT write \"Subject:\".\n- Do NOT use quotation marks.\n- Keep it clear and professional.\n\nCustomer Email:\n{{ $('Complaint Reply AI').item.json.text || $('Complaint Reply AI').item.json.html }}"
+            }
+          ]
+        },
+        "simplify": false,
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        -32,
+        -16
+      ],
+      "id": "e741bb83-ec3c-466a-8228-c7c07b46ba4f",
+      "name": "Complaint Subject AI",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "oKxw4tlNeYXwg73A",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "models/gemini-3-flash-preview"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are a professional email subject generator.\n\nGenerate a professional subject line for a thank you response.\n\nRules:\n- Return ONLY the subject.\n- Maximum 8 words.\n- Do NOT write \"Subject:\".\n- Do NOT use quotation marks.\n\nCustomer Email:\n{{ $('Thank You Reply AI').item.json.text || $('Thank You Reply AI').item.json.html }}"
+            }
+          ]
+        },
+        "simplify": false,
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        -16,
+        448
+      ],
+      "id": "672aed39-3c40-4d69-aba6-897ecda37b86",
+      "name": "Thank You Subject AI",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "oKxw4tlNeYXwg73A",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Email Classifier": {
+      "main": [
+        [
+          {
+            "node": "Category Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Category Switch": {
+      "main": [
+        [
+          {
+            "node": "Order Reply AI",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Inquiry Reply AI",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Generate Ticket ID",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark as Spam",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Thank You Reply AI",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [],
+        [],
+        []
+      ]
+    },
+    "Order Reply AI": {
+      "main": [
+        [
+          {
+            "node": "Order Subject AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Order Subject AI": {
+      "main": [
+        [
+          {
+            "node": "Send Order Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Order Email": {
+      "main": [
+        [
+          {
+            "node": "Order Log Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Inquiry Email": {
+      "main": [
+        [
+          {
+            "node": "Inquiry Log Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Complaint Reply AI": {
+      "main": [
+        [
+          {
+            "node": "Complaint Subject AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Ticket ID": {
+      "main": [
+        [
+          {
+            "node": "Complaint Reply AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Complaint Email": {
+      "main": [
+        [
+          {
+            "node": "Ticket Log Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ticket Log Sheet": {
+      "main": [
+        [
+          {
+            "node": "Complaint Log Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Thank You Reply AI": {
+      "main": [
+        [
+          {
+            "node": "Thank You Subject AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark as Spam": {
+      "main": [
+        [
+          {
+            "node": "Spam Log Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Thank You Email": {
+      "main": [
+        [
+          {
+            "node": "Thank You Log Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Attachment to Drive": {
+      "main": [
+        [
+          {
+            "node": "Email Classifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Attachment": {
+      "main": [
+        [
+          {
+            "node": "Upload Attachment to Drive",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Email Classifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini AI Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Email Classifier",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Check Attachment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Inquiry Reply AI": {
+      "main": [
+        [
+          {
+            "node": "Inquiry Subject AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Inquiry Subject AI": {
+      "main": [
+        [
+          {
+            "node": "Send Inquiry Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Complaint Subject AI": {
+      "main": [
+        [
+          {
+            "node": "Send Complaint Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Thank You Subject AI": {
+      "main": [
+        [
+          {
+            "node": "Send Thank You Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "1cbf2b14-e5cc-4519-ae44-c4d938d7d470",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2b1f897ecb552166100004c2dc4b7191f6608aa348b0dd258b34e0d98b063968"
+  },
+  "nodeGroups": [],
+  "id": "JkQmoRto4h2BGtwJ",
+  "tags": []
+}
